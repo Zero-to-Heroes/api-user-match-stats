@@ -17,17 +17,17 @@ Resources:
     ProcessMatchStatsFunction:
         Type: AWS::Serverless::Function
         Properties:
-            Handler: match-stats.default
+            Handler: retrieve-overview-match-stats.default
             Runtime: nodejs8.10
             Timeout: 180
             Tracing: Active
-            CodeUri: ./dist/match-stats
+            CodeUri: ./dist/retrieve-overview-match-stats
             Policies:
                 - AWSLambdaVPCAccessExecutionRole
                 - AmazonSESFullAccess
                 - SecretsManagerReadWrite
             Events:
-                GetResource:
+                GetMatchStatsResource:
                     Type: Api
                     Properties:
                         Path: /{proxy+}
