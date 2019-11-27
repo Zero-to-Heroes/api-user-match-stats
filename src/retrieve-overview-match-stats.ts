@@ -19,6 +19,7 @@ export default async (event): Promise<any> => {
 		);
 		const results: readonly GameStat[] = dbResults.map(result =>
 			Object.assign(new GameStat(), {
+				additionalResult: result.additionalResult,
 				coinPlay: result.coinPlay,
 				creationTimestamp: Date.parse(result.creationDate),
 				gameFormat: result.gameFormat,
@@ -59,8 +60,9 @@ export default async (event): Promise<any> => {
 };
 
 class GameStat {
+	readonly additionalResult: string;
 	readonly creationTimestamp: number;
-	readonly gameMode: 'arena' | 'arena-draft' | 'casual' | 'friendly' | 'practice' | 'ranked' | 'tavern-brawl';
+	readonly gameMode: 'arena' | 'arena-draft' | 'casual' | 'friendly' | 'practice' | 'ranked' | 'tavern-brawl' | 'battlegrounds';
 	readonly gameFormat: 'standard' | 'wild';
 	readonly buildNumber: number | undefined;
 	readonly scenarioId: number | undefined;
