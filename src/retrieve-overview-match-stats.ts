@@ -9,12 +9,13 @@ export default async (event): Promise<any> => {
 		console.log('input', JSON.stringify(event));
 		const userToken = event.pathParameters && event.pathParameters.proxy;
 		console.log('getting stats for user', userToken);
+		const thirtyDaysAgo = new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000);
 		const dbResults = await rds.runQuery<readonly any[]>(
 			`
 			SELECT * FROM replay_summary 
 			WHERE uploaderToken = '${userToken}'
+			AND creationDate > '${thirtyDaysAgo.toISOString()}'
 			ORDER BY creationDate DESC
-			LIMIT 100
 		`,
 		);
 		const results: readonly GameStat[] = dbResults.map(result =>
