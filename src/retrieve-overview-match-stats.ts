@@ -7,8 +7,10 @@ export default async (event): Promise<any> => {
 	try {
 		const rds = await Rds.getInstance();
 		console.log('input', JSON.stringify(event));
-		const userToken = event.pathParameters && event.pathParameters.proxy;
-		console.log('getting stats for user', userToken);
+		const input: string = event.pathParameters && event.pathParameters.proxy;
+		const userToken = input.indexOf('/') === -1 ? input : input.split('/')[0];
+		const targetReviewId = input.indexOf('/') === -1 ? undefined : input.split('/')[1];
+		console.log('getting stats for user', userToken, targetReviewId);
 		const thirtyDaysAgo = new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000);
 		const dbResults = await rds.runQuery<readonly any[]>(
 			`
@@ -18,29 +20,34 @@ export default async (event): Promise<any> => {
 			ORDER BY creationDate DESC
 		`,
 		);
-		const results: readonly GameStat[] = dbResults.map(result =>
-			Object.assign(new GameStat(), {
-				additionalResult: result.additionalResult,
-				coinPlay: result.coinPlay,
-				creationTimestamp: Date.parse(result.creationDate),
-				gameFormat: result.gameFormat,
-				gameMode: result.gameMode,
-				opponentCardId: result.opponentCardId,
-				opponentClass: result.opponentClass,
-				playerName: result.playerName,
-				playerCardId: result.playerCardId,
-				playerClass: result.playerClass,
-				playerRank: result.playerRank,
-				playerDeckName: result.playerDeckName,
-				playerDecklist: result.playerDecklist,
-				buildNumber: result.buildNumber,
-				scenarioId: result.scenarioId,
-				opponentRank: result.opponentRank,
-				opponentName: result.opponentName,
-				result: result.result,
-				reviewId: result.reviewId,
-			} as GameStat),
-		);
+
+		const results: readonly GameStat[] =
+			targetReviewId && !dbResults.some(result => result.reviewId === targetReviewId)
+				? []
+				: dbResults.map(result =>
+						Object.assign(new GameStat(), {
+							additionalResult: result.additionalResult,
+							coinPlay: result.coinPlay,
+							creationTimestamp: Date.parse(result.creationDate),
+							gameFormat: result.gameFormat,
+							gameMode: result.gameMode,
+							opponentCardId: result.opponentCardId,
+							opponentClass: result.opponentClass,
+							playerName: result.playerName,
+							playerCardId: result.playerCardId,
+							playerClass: result.playerClass,
+							playerRank: result.playerRank,
+							playerDeckName: result.playerDeckName,
+							playerDecklist: result.playerDecklist,
+							buildNumber: result.buildNumber,
+							scenarioId: result.scenarioId,
+							opponentRank: result.opponentRank,
+							opponentName: result.opponentName,
+							result: result.result,
+							reviewId: result.reviewId,
+						} as GameStat),
+				  );
+
 		const response = {
 			statusCode: 200,
 			isBase64Encoded: false,
