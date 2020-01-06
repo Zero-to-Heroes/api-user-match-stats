@@ -20,7 +20,6 @@ Resources:
             Handler: retrieve-overview-match-stats.default
             Runtime: nodejs8.10
             Timeout: 180
-            Tracing: Active
             CodeUri: ./dist/retrieve-overview-match-stats
             Policies:
                 - AWSLambdaVPCAccessExecutionRole
