@@ -59,7 +59,7 @@ export class Rds {
 						reject();
 						return;
 					}
-					console.log('connection created');
+					// console.log('connection created');
 					connection.query(query, (error, results, fields) => {
 						connection.release();
 						if (error) {

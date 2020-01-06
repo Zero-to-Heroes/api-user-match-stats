@@ -6,11 +6,11 @@ import { Rds } from './db/rds';
 export default async (event): Promise<any> => {
 	try {
 		const rds = await Rds.getInstance();
-		console.log('input', JSON.stringify(event));
+		// console.log('input', JSON.stringify(event));
 		const input: string = event.pathParameters && event.pathParameters.proxy;
 		const userToken = input.indexOf('/') === -1 ? input : input.split('/')[0];
 		const targetReviewId = input.indexOf('/') === -1 ? undefined : input.split('/')[1];
-		console.log('getting stats for user', userToken, targetReviewId);
+		// console.log('getting stats for user', userToken, targetReviewId);
 		const thirtyDaysAgo = new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000);
 		const dbResults = await rds.runQuery<readonly any[]>(
 			`
@@ -53,7 +53,7 @@ export default async (event): Promise<any> => {
 			isBase64Encoded: false,
 			body: JSON.stringify({ results }),
 		};
-		console.log('sending back success reponse');
+		// console.log('sending back success reponse');
 		return response;
 	} catch (e) {
 		console.error('issue retrieving stats', e);
