@@ -11,12 +11,12 @@ export default async (event): Promise<any> => {
 		const userToken = input.indexOf('/') === -1 ? input : input.split('/')[0];
 		const targetReviewId = input.indexOf('/') === -1 ? undefined : input.split('/')[1];
 		// console.log('getting stats for user', userToken, targetReviewId);
-		const thirtyDaysAgo = new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000);
+		const startDate = new Date(new Date().getTime() - 100 * 24 * 60 * 60 * 1000);
 		const dbResults = await rds.runQuery<readonly any[]>(
 			`
 			SELECT * FROM replay_summary 
 			WHERE uploaderToken = '${userToken}'
-			AND creationDate > '${thirtyDaysAgo.toISOString()}'
+			AND creationDate > '${startDate.toISOString()}'
 			ORDER BY creationDate DESC
 		`,
 		);
