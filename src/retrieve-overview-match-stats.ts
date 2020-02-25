@@ -1,28 +1,29 @@
-import { Rds } from './db/rds';
+import { getConnection } from './db/rds';
 
 // This example demonstrates a NodeJS 8.10 async handler[1], however of course you could use
 // the more traditional callback-style handler.
 // [1]: https://aws.amazon.com/blogs/compute/node-js-8-10-runtime-now-available-in-aws-lambda/
 export default async (event): Promise<any> => {
 	try {
-		const rds = await Rds.getInstance();
+		const mysql = await getConnection();
 		// console.log('input', JSON.stringify(event));
 		const input: string = event.pathParameters && event.pathParameters.proxy;
 		const userToken = input.indexOf('/') === -1 ? input : input.split('/')[0];
 		const targetReviewId = input.indexOf('/') === -1 ? undefined : input.split('/')[1];
 		// console.log('getting stats for user', userToken, targetReviewId);
 		const startDate = new Date(new Date().getTime() - 100 * 24 * 60 * 60 * 1000);
-		const dbResults = await rds.runQuery<readonly any[]>(
-			`
+		const query = `
 			SELECT * FROM replay_summary 
 			WHERE uploaderToken = '${userToken}'
 			AND creationDate > '${startDate.toISOString()}'
 			ORDER BY creationDate DESC
-		`,
-		);
+		`;
+		console.log('prepared query', query);
+		const dbResults: readonly any[] = await mysql.query(query);
+		console.log('executed query', dbResults && dbResults.length, dbResults && dbResults.length > 0 && dbResults[0]);
 
 		const results: readonly GameStat[] =
-			targetReviewId && !dbResults.some(result => result.reviewId === targetReviewId)
+			!dbResults || (targetReviewId && !dbResults.some(result => result.reviewId === targetReviewId))
 				? []
 				: dbResults.map(result =>
 						Object.assign(new GameStat(), {
@@ -47,13 +48,14 @@ export default async (event): Promise<any> => {
 							reviewId: result.reviewId,
 						} as GameStat),
 				  );
+		console.log('results filtered', results.length);
 
 		const response = {
 			statusCode: 200,
 			isBase64Encoded: false,
 			body: JSON.stringify({ results }),
 		};
-		// console.log('sending back success reponse');
+		console.log('sending back success reponse');
 		return response;
 	} catch (e) {
 		console.error('issue retrieving stats', e);
