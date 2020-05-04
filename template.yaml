@@ -18,7 +18,8 @@ Resources:
         Type: AWS::Serverless::Function
         Properties:
             Handler: retrieve-overview-match-stats.default
-            Runtime: nodejs8.10
+            # Runtime: nodejs8.10
+            Runtime: nodejs10.x
             Timeout: 180
             CodeUri: ./dist/retrieve-overview-match-stats
             Policies:
