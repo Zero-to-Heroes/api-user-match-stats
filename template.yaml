@@ -21,6 +21,7 @@ Resources:
             # Runtime: nodejs8.10
             Runtime: nodejs10.x
             Timeout: 180
+            ReservedConcurrentExecutions: 40
             CodeUri: ./dist/retrieve-overview-match-stats
             Policies:
                 - AWSLambdaVPCAccessExecutionRole
