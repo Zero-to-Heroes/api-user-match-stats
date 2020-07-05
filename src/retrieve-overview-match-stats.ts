@@ -12,11 +12,26 @@ export default async (event): Promise<any> => {
 		const targetReviewId = input.indexOf('/') === -1 ? undefined : input.split('/')[1];
 		// console.log('getting stats for user', userToken, targetReviewId);
 		const startDate = new Date(new Date().getTime() - 100 * 24 * 60 * 60 * 1000);
+		// This request is complex because the matches are associated to a userId,
+		// which (I learnt too late unfortunately) are not a 1-1 mapping with a username
+		// It queries against both a username and a userId so that I can later
+		// change the input to be the username if it exists
+		const userIdFromToken = userToken.includes('overwolf-') ? userToken.split('overwolf-')[1] : userToken;
 		const query = `
-			SELECT * FROM replay_summary 
-			WHERE uploaderToken = '${userToken}'
-			AND creationDate > '${startDate.toISOString()}'
-			ORDER BY creationDate DESC
+			SELECT * FROM replay_summary
+			WHERE 
+				uploaderToken IN (
+					SELECT DISTINCT CONCAT('overwolf-', userId) FROM user_mapping
+					INNER JOIN (
+						SELECT DISTINCT username FROM user_mapping
+						WHERE 
+							(username = '${userIdFromToken}' OR userId = '${userIdFromToken}')
+							AND username IS NOT NULL
+							AND username != ''
+					) AS x ON x.username = user_mapping.username
+				)
+				AND creationDate > '${startDate.toISOString()}'
+				ORDER BY creationDate DESC
 		`;
 		console.log('prepared query', query);
 		const dbResults: readonly any[] = await mysql.query(query);

@@ -1,7 +1,9 @@
 # Test it
 
 ```
-sam local start-api
+npm run build && sam local start-api
+
+curl -X POST http://127.0.0.1:3000/overwolf-OW_2c40f5f0-4b1c-476a-98c0-d6ac63508d4b
 ```
 
 # Deploy
