@@ -8,31 +8,27 @@ export default async (event): Promise<any> => {
 		const mysql = await getConnection();
 		// console.log('input', JSON.stringify(event));
 		const input: string = event.pathParameters && event.pathParameters.proxy;
-		const userToken = input.indexOf('/') === -1 ? input : input.split('/')[0];
-		const targetReviewId = input.indexOf('/') === -1 ? undefined : input.split('/')[1];
+		const userToken = input ? (input.indexOf('/') === -1 ? input : input.split('/')[0]) : null;
+		const targetReviewId = input ? (input?.indexOf('/') === -1 ? undefined : input.split('/')[1]) : null;
 		// console.log('getting stats for user', userToken, targetReviewId);
 		const startDate = new Date(new Date().getTime() - 100 * 24 * 60 * 60 * 1000);
 		// This request is complex because the matches are associated to a userId,
 		// which (I learnt too late unfortunately) are not a 1-1 mapping with a username
 		// It queries against both a username and a userId so that I can later
 		// change the input to be the username if it exists
-		const userIdFromToken = userToken.includes('overwolf-') ? userToken.split('overwolf-')[1] : userToken;
+		const userIdFromToken = userToken?.includes('overwolf-') ? userToken?.split('overwolf-')[1] : userToken;
+		const userInput = JSON.parse(event.body);
+		// First need to add the userName column, then populate it with new process, then with hourly sync process
 		const query = `
-			SELECT * FROM replay_summary
-			WHERE 
-				uploaderToken IN (
-					SELECT DISTINCT CONCAT('overwolf-', userId) FROM user_mapping
-					INNER JOIN (
-						SELECT DISTINCT username FROM user_mapping
-						WHERE 
-							(username = '${userIdFromToken}' OR userId = '${userIdFromToken}')
-							AND username IS NOT NULL
-							AND username != ''
-					) AS x ON x.username = user_mapping.username
+				SELECT * FROM replay_summary 
+				WHERE (
+					uploaderToken = '${userInput?.uploaderToken || userToken}'
+					OR userId = '${userInput?.userId || userIdFromToken}'
+					OR userName = '${userInput?.userName || 'invalid_user_name'}'
 				)
 				AND creationDate > '${startDate.toISOString()}'
 				ORDER BY creationDate DESC
-		`;
+			`;
 		console.log('prepared query', query);
 		const dbResults: readonly any[] = await mysql.query(query);
 		console.log('executed query', dbResults && dbResults.length, dbResults && dbResults.length > 0 && dbResults[0]);
@@ -87,7 +83,15 @@ export default async (event): Promise<any> => {
 class GameStat {
 	readonly additionalResult: string;
 	readonly creationTimestamp: number;
-	readonly gameMode: 'arena' | 'arena-draft' | 'casual' | 'friendly' | 'practice' | 'ranked' | 'tavern-brawl' | 'battlegrounds';
+	readonly gameMode:
+		| 'arena'
+		| 'arena-draft'
+		| 'casual'
+		| 'friendly'
+		| 'practice'
+		| 'ranked'
+		| 'tavern-brawl'
+		| 'battlegrounds';
 	readonly gameFormat: 'standard' | 'wild';
 	readonly buildNumber: number | undefined;
 	readonly scenarioId: number | undefined;
