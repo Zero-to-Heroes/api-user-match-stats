@@ -10,7 +10,6 @@ export default async (event): Promise<any> => {
 		const input: string = event.pathParameters && event.pathParameters.proxy;
 		const userToken = input ? (input.indexOf('/') === -1 ? input : input.split('/')[0]) : null;
 		const targetReviewId = input ? (input?.indexOf('/') === -1 ? undefined : input.split('/')[1]) : null;
-		// console.log('getting stats for user', userToken, targetReviewId);
 		const startDate = new Date(new Date().getTime() - 100 * 24 * 60 * 60 * 1000);
 		// This request is complex because the matches are associated to a userId,
 		// which (I learnt too late unfortunately) are not a 1-1 mapping with a username
@@ -18,6 +17,7 @@ export default async (event): Promise<any> => {
 		// change the input to be the username if it exists
 		const userIdFromToken = userToken?.includes('overwolf-') ? userToken?.split('overwolf-')[1] : userToken;
 		const userInput = JSON.parse(event.body);
+		console.log('getting stats for user', userToken, targetReviewId, userInput?.userName);
 		// First need to add the userName column, then populate it with new process, then with hourly sync process
 		const query = `
 				SELECT * FROM replay_summary 
