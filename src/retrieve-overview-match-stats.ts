@@ -20,15 +20,15 @@ export default async (event): Promise<any> => {
 		console.log('getting stats for user', userToken, targetReviewId, userInput?.userName);
 		// First need to add the userName column, then populate it with new process, then with hourly sync process
 		const query = `
-				SELECT * FROM replay_summary 
-				WHERE (
-					uploaderToken = '${userInput?.uploaderToken || userToken}'
-					OR userId = '${userInput?.userId || userIdFromToken}'
-					OR userName = '${userInput?.userName || 'invalid_user_name'}'
-				)
-				AND creationDate > '${startDate.toISOString()}'
-				ORDER BY creationDate DESC
-			`;
+			SELECT * FROM replay_summary 
+			WHERE (
+				uploaderToken = '${userInput?.uploaderToken || userToken}'
+				OR userId = '${userInput?.userId || userIdFromToken}'
+				OR userName = '${userInput?.userName || 'invalid_user_name'}'
+			)
+			AND creationDate > '${startDate.toISOString()}'
+			ORDER BY creationDate DESC
+		`;
 		console.log('prepared query', query);
 		const dbResults: readonly any[] = await mysql.query(query);
 		console.log('executed query', dbResults && dbResults.length, dbResults && dbResults.length > 0 && dbResults[0]);
@@ -49,6 +49,7 @@ export default async (event): Promise<any> => {
 							playerCardId: result.playerCardId,
 							playerClass: result.playerClass,
 							playerRank: result.playerRank,
+							newPlayerRank: result.newPlayerRank,
 							playerDeckName: result.playerDeckName,
 							playerDecklist: result.playerDecklist,
 							buildNumber: result.buildNumber,
@@ -100,6 +101,7 @@ class GameStat {
 	readonly playerName: string;
 	readonly playerClass: string;
 	readonly playerRank: string | undefined;
+	readonly newPlayerRank: string | undefined;
 	readonly playerCardId: string;
 	readonly playerDecklist: string | undefined;
 	readonly playerDeckName: string | undefined;
