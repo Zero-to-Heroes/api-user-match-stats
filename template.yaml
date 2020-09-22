@@ -12,6 +12,7 @@ Globals:
             AllowMethods: "'*'"
             AllowHeaders: "'*'"
             AllowOrigin: "'*'"
+        MinimumCompressionSize: 100
 
 Resources:
     ProcessMatchStatsFunction:

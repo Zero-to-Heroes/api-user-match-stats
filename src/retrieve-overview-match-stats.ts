@@ -1,3 +1,4 @@
+import { gzipSync } from 'zlib';
 import { getConnection } from './db/rds';
 
 // This example demonstrates a NodeJS 8.10 async handler[1], however of course you could use
@@ -62,10 +63,17 @@ export default async (event): Promise<any> => {
 				  );
 		console.log('results filtered', results.length);
 
+		const stringResults = JSON.stringify({ results });
+		const gzippedResults = gzipSync(stringResults).toString('base64');
+		console.log('compressed', stringResults.length, gzippedResults.length);
 		const response = {
 			statusCode: 200,
-			isBase64Encoded: false,
-			body: JSON.stringify({ results }),
+			isBase64Encoded: true,
+			body: gzippedResults,
+			headers: {
+				'Content-Type': 'text/html',
+				'Content-Encoding': 'gzip',
+			},
 		};
 		console.log('sending back success reponse');
 		return response;
