@@ -129,7 +129,13 @@ const buildReviewData = (reviewId: string, dbResults: readonly any[]): GameStat 
 		result: mainReview.result,
 		reviewId: mainReview.reviewId,
 		// Fill in with other stats here
+		gameDurationSeconds: findStat(relevantReviews, 'total-duration-seconds'),
+		gameDurationTurns: findStat(relevantReviews, 'total-duration-turns'),
 	} as GameStat;
+};
+
+const findStat = (reviews: readonly any[], statName: string): number => {
+	return reviews.find(review => review.statName === statName)?.statValue;
 };
 
 class GameStat {
@@ -161,4 +167,6 @@ class GameStat {
 	readonly opponentCardId: string;
 	readonly opponentName: string;
 	readonly reviewId: string;
+	readonly gameDurationSeconds: number;
+	readonly gameDurationTurns: number;
 }
