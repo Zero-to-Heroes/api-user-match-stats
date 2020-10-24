@@ -47,34 +47,6 @@ export default async (event): Promise<any> => {
 		console.log('uniqueReviewIds', uniqueReviewIds);
 
 		const results: readonly GameStat[] = uniqueReviewIds.map(reviewId => buildReviewData(reviewId, dbResults));
-
-		// const results: readonly GameStat[] =
-		// 	!dbResults || (targetReviewId && !dbResults.some(result => result.reviewId === targetReviewId))
-		// 		? []
-		// 		: dbResults.map(result =>
-		// 				Object.assign(new GameStat(), {
-		// 					additionalResult: result.additionalResult,
-		// 					coinPlay: result.coinPlay,
-		// 					creationTimestamp: Date.parse(result.creationDate),
-		// 					gameFormat: result.gameFormat,
-		// 					gameMode: result.gameMode,
-		// 					opponentCardId: result.opponentCardId,
-		// 					opponentClass: result.opponentClass,
-		// 					playerName: result.playerName,
-		// 					playerCardId: result.playerCardId,
-		// 					playerClass: result.playerClass,
-		// 					playerRank: result.playerRank,
-		// 					newPlayerRank: result.newPlayerRank,
-		// 					playerDeckName: result.playerDeckName,
-		// 					playerDecklist: result.playerDecklist,
-		// 					buildNumber: result.buildNumber,
-		// 					scenarioId: result.scenarioId,
-		// 					opponentRank: result.opponentRank,
-		// 					opponentName: result.opponentName,
-		// 					result: result.result,
-		// 					reviewId: result.reviewId,
-		// 				} as GameStat),
-		// 		  );
 		console.log('results filtered', results.length, results && results.length > 0 && results[0]);
 
 		const stringResults = JSON.stringify({ results });
@@ -131,6 +103,8 @@ const buildReviewData = (reviewId: string, dbResults: readonly any[]): GameStat 
 		// Fill in with other stats here
 		gameDurationSeconds: findStat(relevantReviews, 'total-duration-seconds'),
 		gameDurationTurns: findStat(relevantReviews, 'total-duration-turns'),
+		currentDuelsRunId: findStat(relevantReviews, 'duels-run-id'),
+		// currentPaidDuelsRunId: findStat(relevantReviews, 'paid-duels-run-id'),
 	} as GameStat;
 };
 
@@ -149,7 +123,9 @@ class GameStat {
 		| 'practice'
 		| 'ranked'
 		| 'tavern-brawl'
-		| 'battlegrounds';
+		| 'battlegrounds'
+		| 'duels'
+		| 'paid-duels';
 	readonly gameFormat: 'standard' | 'wild';
 	readonly buildNumber: number | undefined;
 	readonly scenarioId: number | undefined;
