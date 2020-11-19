@@ -23,6 +23,7 @@ Resources:
             Runtime: nodejs10.x
             Timeout: 180
             ReservedConcurrentExecutions: 40
+            MemorySize: 128 # Need to increase the memory to go faster and avoid the 30s timeout on the API gateway
             CodeUri: ./dist/retrieve-overview-match-stats
             Policies:
                 - AWSLambdaVPCAccessExecutionRole

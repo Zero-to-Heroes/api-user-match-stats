@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import { gzipSync } from 'zlib';
 import { getConnection } from './db/rds';
+import { groupByFunction } from './utils';
 
 // This example demonstrates a NodeJS 8.10 async handler[1], however of course you could use
 // the more traditional callback-style handler.
@@ -21,6 +22,8 @@ export default async (event): Promise<any> => {
 		const userInput = JSON.parse(event.body);
 		console.log('getting stats for user', userToken, targetReviewId, userInput?.userName);
 		// First need to add the userName column, then populate it with new process, then with hourly sync process
+		// bgs-hero-pick-choice is here to accomodate the early BG games that don't have other info in
+		// match_stats
 		const query = `
 			SELECT t1.*, statName, statValue FROM replay_summary t1
 			LEFT OUTER JOIN match_stats t2
@@ -31,6 +34,10 @@ export default async (event): Promise<any> => {
 				OR t1.userName = '${userInput?.userName || 'invalid_user_name'}'
 			)
 			AND t1.creationDate > '${startDate.toISOString()}'
+			AND (
+				t2.statName is null 
+				OR t2.statName in ('total-duration-seconds', 'total-duration-turns', 'duels-run-id', 'bgs-hero-pick-choice')
+			)
 			ORDER BY t1.creationDate DESC
 		`;
 		console.log('prepared query', query);
@@ -42,12 +49,22 @@ export default async (event): Promise<any> => {
 			!dbResults || (targetReviewId && !dbResults.some(result => result.reviewId === targetReviewId))
 				? []
 				: dbResults.map(result => result.reviewId as string);
-		console.log('all review ids', allReviewIds);
-		const uniqueReviewIds: readonly string[] = [...new Set(allReviewIds)];
-		console.log('uniqueReviewIds', uniqueReviewIds);
 
-		const results: readonly GameStat[] = uniqueReviewIds.map(reviewId => buildReviewData(reviewId, dbResults));
-		console.log('results filtered', results.length, results && results.length > 0 && results[0]);
+		// console.log('all review ids', allReviewIds);
+		const uniqueReviewIds: readonly string[] = [...new Set(allReviewIds)];
+		console.log('uniqueReviewIds', uniqueReviewIds.length);
+
+		const groupedByReviewId: { [reviewId: string]: readonly any[] } = groupByFunction(
+			(result: any) => result.reviewId,
+		)(dbResults);
+		console.log('groupedByReviewId', Object.keys(groupedByReviewId)?.length);
+
+		// const groupedByRelatedReviews = uniqueReviewIds.map(reviewId =>
+		// 	dbResults.filter(review => review.reviewId === reviewId),
+		// );
+		// console.log('groupedByRelatedReviews', groupedByRelatedReviews.length);
+		const results: readonly GameStat[] = Object.values(groupedByReviewId).map(reviews => buildReviewData(reviews));
+		console.log('results filtered', results.length);
 
 		const stringResults = JSON.stringify({ results });
 		const gzippedResults = gzipSync(stringResults).toString('base64');
@@ -75,9 +92,8 @@ export default async (event): Promise<any> => {
 	}
 };
 
-const buildReviewData = (reviewId: string, dbResults: readonly any[]): GameStat => {
-	const relevantReviews = dbResults.filter(review => review.reviewId === reviewId);
-	const mainReview = relevantReviews[0];
+const buildReviewData = (relatedReviews: readonly any[]): GameStat => {
+	const mainReview = relatedReviews[0];
 	// console.log('building review data for', reviewId, mainReview, relevantReviews, dbResults);
 	return {
 		additionalResult: mainReview.additionalResult,
@@ -101,9 +117,10 @@ const buildReviewData = (reviewId: string, dbResults: readonly any[]): GameStat 
 		result: mainReview.result,
 		reviewId: mainReview.reviewId,
 		// Fill in with other stats here
-		gameDurationSeconds: findStat(relevantReviews, 'total-duration-seconds'),
-		gameDurationTurns: findStat(relevantReviews, 'total-duration-turns'),
-		currentDuelsRunId: findStat(relevantReviews, 'duels-run-id'),
+		// CAREFUL: add the stat you want to the main query, so it gets fetched from the DB in the first place
+		gameDurationSeconds: findStat(relatedReviews, 'total-duration-seconds'),
+		gameDurationTurns: findStat(relatedReviews, 'total-duration-turns'),
+		currentDuelsRunId: findStat(relatedReviews, 'duels-run-id'),
 		// currentPaidDuelsRunId: findStat(relevantReviews, 'paid-duels-run-id'),
 	} as GameStat;
 };
