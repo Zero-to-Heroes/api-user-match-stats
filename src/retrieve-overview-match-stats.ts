@@ -24,6 +24,7 @@ export default async (event): Promise<any> => {
 		// First need to add the userName column, then populate it with new process, then with hourly sync process
 		// bgs-hero-pick-choice is here to accomodate the early BG games that don't have other info in
 		// match_stats
+		const userNameCrit = userInput?.userName ? `OR t1.userName = '${userInput?.userName}'` : '';
 		const query = `
 			SELECT t1.*, statName, statValue FROM replay_summary t1
 			LEFT OUTER JOIN match_stats t2
@@ -31,7 +32,7 @@ export default async (event): Promise<any> => {
 			WHERE (
 				t1.uploaderToken = '${userInput?.uploaderToken || userToken}'
 				OR t1.userId = '${userInput?.userId || userIdFromToken}'
-				OR t1.userName = '${userInput?.userName || 'invalid_user_name'}'
+				${userNameCrit}
 			)
 			AND t1.creationDate > '${startDate.toISOString()}'
 			AND (
