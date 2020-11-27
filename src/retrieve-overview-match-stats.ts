@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import { gzipSync } from 'zlib';
 import { getConnection } from './db/rds';
-import { groupByFunction } from './utils';
 
 // This example demonstrates a NodeJS 8.10 async handler[1], however of course you could use
 // the more traditional callback-style handler.
@@ -9,35 +8,33 @@ import { groupByFunction } from './utils';
 export default async (event): Promise<any> => {
 	try {
 		const mysql = await getConnection();
-		// console.log('input', JSON.stringify(event));
-		const input: string = event.pathParameters && event.pathParameters.proxy;
-		const userToken = input ? (input.indexOf('/') === -1 ? input : input.split('/')[0]) : null;
-		const targetReviewId = input ? (input?.indexOf('/') === -1 ? undefined : input.split('/')[1]) : null;
 		const startDate = new Date(new Date().getTime() - 100 * 24 * 60 * 60 * 1000);
 		// This request is complex because the matches are associated to a userId,
 		// which (I learnt too late unfortunately) are not a 1-1 mapping with a username
 		// It queries against both a username and a userId so that I can later
 		// change the input to be the username if it exists
-		const userIdFromToken = userToken?.includes('overwolf-') ? userToken?.split('overwolf-')[1] : userToken;
+
 		const userInput = JSON.parse(event.body);
-		console.log('getting stats for user', userToken, targetReviewId, userInput?.userName);
+		console.log('getting stats for user', JSON.stringify(userInput));
+		if (!userInput) {
+			console.warn('trying to get match stats without input, returning');
+			return;
+		}
+
 		// First need to add the userName column, then populate it with new process, then with hourly sync process
 		// bgs-hero-pick-choice is here to accomodate the early BG games that don't have other info in
 		// match_stats
 		const userNameCrit = userInput?.userName ? `OR t1.userName = '${userInput.userName}'` : '';
 		const query = `
-			SELECT t1.*, statName, statValue, t3.* FROM replay_summary t1
-			LEFT OUTER JOIN replay_summary_secondary_data t3 ON t1.reviewId = t3.reviewId
-			LEFT OUTER JOIN match_stats t2 ON t1.reviewId = t2.reviewId
+			SELECT t1.*, t2.totalDurationSeconds, t2.totalDurationTurns, t2.duelsRunId
+			FROM replay_summary t1
+			LEFT OUTER JOIN replay_summary_secondary_data t2 ON t1.reviewId = t2.reviewId
 			WHERE (
-				t1.userId = '${userInput?.userId || userIdFromToken}'
+				t1.uploaderToken = '${userInput.uploaderToken}'
+				OR t1.userId = '${userInput?.userId}'
 				${userNameCrit}
 			)
 			AND t1.creationDate > '${startDate.toISOString()}'
-			AND (
-				t2.statName is null 
-				OR t2.statName in ('total-duration-seconds', 'total-duration-turns', 'duels-run-id', 'bgs-hero-pick-choice')
-			)
 			ORDER BY t1.creationDate DESC
 		`;
 		console.log('prepared query', query);
@@ -45,26 +42,23 @@ export default async (event): Promise<any> => {
 		console.log('executed query', dbResults && dbResults.length, dbResults && dbResults.length > 0 && dbResults[0]);
 		await mysql.end();
 
-		// Merging results
-		const allReviewIds: readonly string[] =
-			!dbResults || (targetReviewId && !dbResults.some(result => result.reviewId === targetReviewId))
-				? []
-				: dbResults.map(result => result.reviewId as string);
+		// // Merging results
+		// const allReviewIds: readonly string[] = !dbResults ? [] : dbResults.map(result => result.reviewId as string);
+		// console.log('all review ids', allReviewIds?.length);
 
-		// console.log('all review ids', allReviewIds);
-		const uniqueReviewIds: readonly string[] = [...new Set(allReviewIds)];
-		console.log('uniqueReviewIds', uniqueReviewIds.length);
+		// const uniqueReviewIds: readonly string[] = [...new Set(allReviewIds)];
+		// console.log('uniqueReviewIds', uniqueReviewIds.length);
 
-		const groupedByReviewId: { [reviewId: string]: readonly any[] } = groupByFunction(
-			(result: any) => result.reviewId,
-		)(dbResults);
-		console.log('groupedByReviewId', Object.keys(groupedByReviewId)?.length);
+		// const groupedByReviewId: { [reviewId: string]: readonly any[] } = groupByFunction(
+		// 	(result: any) => result.reviewId,
+		// )(dbResults);
+		// console.log('groupedByReviewId', Object.keys(groupedByReviewId)?.length);
 
 		// const groupedByRelatedReviews = uniqueReviewIds.map(reviewId =>
 		// 	dbResults.filter(review => review.reviewId === reviewId),
 		// );
 		// console.log('groupedByRelatedReviews', groupedByRelatedReviews.length);
-		const results: readonly GameStat[] = Object.values(groupedByReviewId).map(reviews => buildReviewData(reviews));
+		const results: readonly GameStat[] = dbResults.map(review => buildReviewData(review));
 		console.log('results filtered', results.length);
 
 		const stringResults = JSON.stringify({ results });
@@ -93,8 +87,7 @@ export default async (event): Promise<any> => {
 	}
 };
 
-const buildReviewData = (relatedReviews: readonly any[]): GameStat => {
-	const mainReview = relatedReviews[0];
+const buildReviewData = (mainReview: any): GameStat => {
 	// console.log('building review data for', reviewId, mainReview, relevantReviews, dbResults);
 	return {
 		additionalResult: mainReview.additionalResult,
@@ -118,15 +111,15 @@ const buildReviewData = (relatedReviews: readonly any[]): GameStat => {
 		result: mainReview.result,
 		reviewId: mainReview.reviewId,
 		// Fill in with other stats here
-		gameDurationSeconds: mainReview.durationInSeconds ?? findStat(relatedReviews, 'total-duration-seconds'),
-		gameDurationTurns: mainReview.durationInTurns ?? findStat(relatedReviews, 'total-duration-turns'),
-		currentDuelsRunId: mainReview.duelsRunId ?? findStat(relatedReviews, 'duels-run-id'),
+		gameDurationSeconds: mainReview.totalDurationSeconds,
+		gameDurationTurns: mainReview.totalDurationTurns,
+		currentDuelsRunId: mainReview.duelsRunId,
 	} as GameStat;
 };
 
-const findStat = (reviews: readonly any[], statName: string): number => {
-	return reviews.find(review => review.statName === statName)?.statValue;
-};
+// const findStat = (reviews: readonly any[], statName: string): number => {
+// 	return reviews.find(review => review.statName === statName)?.statValue;
+// };
 
 class GameStat {
 	readonly additionalResult: string;
