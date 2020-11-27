@@ -24,14 +24,13 @@ export default async (event): Promise<any> => {
 		// First need to add the userName column, then populate it with new process, then with hourly sync process
 		// bgs-hero-pick-choice is here to accomodate the early BG games that don't have other info in
 		// match_stats
-		const userNameCrit = userInput?.userName ? `OR t1.userName = '${userInput?.userName}'` : '';
+		const userNameCrit = userInput?.userName ? `OR t1.userName = '${userInput.userName}'` : '';
 		const query = `
-			SELECT t1.*, statName, statValue FROM replay_summary t1
-			LEFT OUTER JOIN match_stats t2
-			ON t1.reviewId = t2.reviewId
+			SELECT t1.*, statName, statValue, t3.* FROM replay_summary t1
+			LEFT OUTER JOIN replay_summary_secondary_data t3 ON t1.reviewId = t3.reviewId
+			LEFT OUTER JOIN match_stats t2 ON t1.reviewId = t2.reviewId
 			WHERE (
-				t1.uploaderToken = '${userInput?.uploaderToken || userToken}'
-				OR t1.userId = '${userInput?.userId || userIdFromToken}'
+				t1.userId = '${userInput?.userId || userIdFromToken}'
 				${userNameCrit}
 			)
 			AND t1.creationDate > '${startDate.toISOString()}'
@@ -119,11 +118,9 @@ const buildReviewData = (relatedReviews: readonly any[]): GameStat => {
 		result: mainReview.result,
 		reviewId: mainReview.reviewId,
 		// Fill in with other stats here
-		// CAREFUL: add the stat you want to the main query, so it gets fetched from the DB in the first place
-		gameDurationSeconds: findStat(relatedReviews, 'total-duration-seconds'),
-		gameDurationTurns: findStat(relatedReviews, 'total-duration-turns'),
-		currentDuelsRunId: findStat(relatedReviews, 'duels-run-id'),
-		// currentPaidDuelsRunId: findStat(relevantReviews, 'paid-duels-run-id'),
+		gameDurationSeconds: mainReview.durationInSeconds ?? findStat(relatedReviews, 'total-duration-seconds'),
+		gameDurationTurns: mainReview.durationInTurns ?? findStat(relatedReviews, 'total-duration-turns'),
+		currentDuelsRunId: mainReview.duelsRunId ?? findStat(relatedReviews, 'duels-run-id'),
 	} as GameStat;
 };
 
