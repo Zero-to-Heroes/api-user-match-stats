@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
+import SqlString from 'sqlstring';
 import { gzipSync } from 'zlib';
 import { getConnection } from './db/rds';
 
@@ -7,6 +8,7 @@ import { getConnection } from './db/rds';
 // [1]: https://aws.amazon.com/blogs/compute/node-js-8-10-runtime-now-available-in-aws-lambda/
 export default async (event): Promise<any> => {
 	try {
+		const escape = SqlString.escape;
 		const mysql = await getConnection();
 		const startDate = new Date(new Date().getTime() - 100 * 24 * 60 * 60 * 1000);
 		// This request is complex because the matches are associated to a userId,
@@ -24,17 +26,18 @@ export default async (event): Promise<any> => {
 		// First need to add the userName column, then populate it with new process, then with hourly sync process
 		// bgs-hero-pick-choice is here to accomodate the early BG games that don't have other info in
 		// match_stats
-		const userNameCrit = userInput?.userName ? `OR t1.userName = '${userInput.userName}'` : '';
+		const userNameCrit = userInput?.userName ? `OR t1.userName = ${escape(userInput.userName)}` : '';
 		const query = `
-			SELECT t1.*, t2.totalDurationSeconds, t2.totalDurationTurns, t2.duelsRunId
+			SELECT t1.*, t2.totalDurationSeconds, t2.totalDurationTurns, t2.duelsRunId, t3.playerArchetypeId, t3.opponentArchetypeId
 			FROM replay_summary t1
 			LEFT OUTER JOIN replay_summary_secondary_data t2 ON t1.reviewId = t2.reviewId
+			LEFT OUTER JOIN ranked_decks t3 ON t1.reviewId = t3.reviewId
 			WHERE (
-				t1.uploaderToken = '${userInput.uploaderToken}'
-				OR t1.userId = '${userInput?.userId}'
+				t1.uploaderToken = ${escape(userInput.uploaderToken)}
+				OR t1.userId = ${escape(userInput?.userId)}
 				${userNameCrit}
 			)
-			AND t1.creationDate > '${startDate.toISOString()}'
+			AND t1.creationDate > ${escape(startDate.toISOString())}
 			ORDER BY t1.creationDate DESC
 		`;
 		console.log('prepared query', query);
@@ -42,21 +45,6 @@ export default async (event): Promise<any> => {
 		console.log('executed query', dbResults && dbResults.length, dbResults && dbResults.length > 0 && dbResults[0]);
 		await mysql.end();
 
-		// // Merging results
-		// const allReviewIds: readonly string[] = !dbResults ? [] : dbResults.map(result => result.reviewId as string);
-		// console.log('all review ids', allReviewIds?.length);
-
-		// const uniqueReviewIds: readonly string[] = [...new Set(allReviewIds)];
-		// console.log('uniqueReviewIds', uniqueReviewIds.length);
-
-		// const groupedByReviewId: { [reviewId: string]: readonly any[] } = groupByFunction(
-		// 	(result: any) => result.reviewId,
-		// )(dbResults);
-		// console.log('groupedByReviewId', Object.keys(groupedByReviewId)?.length);
-
-		// const groupedByRelatedReviews = uniqueReviewIds.map(reviewId =>
-		// 	dbResults.filter(review => review.reviewId === reviewId),
-		// );
 		// console.log('groupedByRelatedReviews', groupedByRelatedReviews.length);
 		const results: readonly GameStat[] = dbResults.map(review => buildReviewData(review));
 		console.log('results filtered', results.length);
@@ -114,6 +102,8 @@ const buildReviewData = (mainReview: any): GameStat => {
 		gameDurationSeconds: mainReview.totalDurationSeconds,
 		gameDurationTurns: mainReview.totalDurationTurns,
 		currentDuelsRunId: mainReview.duelsRunId,
+		playerArchetypeId: mainReview.playerArchetypeId,
+		opponentArchetypeId: mainReview.opponentArchetypeId,
 	} as GameStat;
 };
 
@@ -121,7 +111,7 @@ const buildReviewData = (mainReview: any): GameStat => {
 // 	return reviews.find(review => review.statName === statName)?.statValue;
 // };
 
-class GameStat {
+interface GameStat {
 	readonly additionalResult: string;
 	readonly creationTimestamp: number;
 	readonly gameMode:
@@ -154,4 +144,6 @@ class GameStat {
 	readonly reviewId: string;
 	readonly gameDurationSeconds: number;
 	readonly gameDurationTurns: number;
+	readonly playerArchetypeId: string;
+	readonly opponentArchetypeId: string;
 }
