@@ -21,7 +21,7 @@ Resources:
             Handler: retrieve-overview-match-stats.default
             # Runtime: nodejs8.10
             Runtime: nodejs10.x
-            Timeout: 60
+            Timeout: 100
             ReservedConcurrentExecutions: 40
             MemorySize: 128 # Need to increase the memory to go faster and avoid the 30s timeout on the API gateway
             CodeUri: ./dist/retrieve-overview-match-stats
