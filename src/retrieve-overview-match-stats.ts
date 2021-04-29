@@ -7,27 +7,26 @@ import { getConnection } from './db/rds';
 // the more traditional callback-style handler.
 // [1]: https://aws.amazon.com/blogs/compute/node-js-8-10-runtime-now-available-in-aws-lambda/
 export default async (event): Promise<any> => {
-	try {
-		const escape = SqlString.escape;
-		const mysql = await getConnection();
-		const startDate = new Date(new Date().getTime() - 100 * 24 * 60 * 60 * 1000);
-		// This request is complex because the matches are associated to a userId,
-		// which (I learnt too late unfortunately) are not a 1-1 mapping with a username
-		// It queries against both a username and a userId so that I can later
-		// change the input to be the username if it exists
+	const escape = SqlString.escape;
+	const mysql = await getConnection();
+	const startDate = new Date(new Date().getTime() - 100 * 24 * 60 * 60 * 1000);
+	// This request is complex because the matches are associated to a userId,
+	// which (I learnt too late unfortunately) are not a 1-1 mapping with a username
+	// It queries against both a username and a userId so that I can later
+	// change the input to be the username if it exists
 
-		const userInput = JSON.parse(event.body);
-		console.log('getting stats for user', JSON.stringify(userInput));
-		if (!userInput) {
-			console.warn('trying to get match stats without input, returning');
-			return;
-		}
+	const userInput = JSON.parse(event.body);
+	console.log('getting stats for user', JSON.stringify(userInput));
+	if (!userInput) {
+		console.warn('trying to get match stats without input, returning');
+		return;
+	}
 
-		// First need to add the userName column, then populate it with new process, then with hourly sync process
-		// bgs-hero-pick-choice is here to accomodate the early BG games that don't have other info in
-		// match_stats
-		const userNameCrit = userInput?.userName ? `OR t1.userName = ${escape(userInput.userName)}` : '';
-		const query = `
+	// First need to add the userName column, then populate it with new process, then with hourly sync process
+	// bgs-hero-pick-choice is here to accomodate the early BG games that don't have other info in
+	// match_stats
+	const userNameCrit = userInput?.userName ? `OR t1.userName = ${escape(userInput.userName)}` : '';
+	const query = `
 			SELECT t1.*, t2.totalDurationSeconds, t2.totalDurationTurns, t2.duelsRunId, t3.playerArchetypeId, t3.opponentArchetypeId
 			FROM replay_summary t1
 			LEFT OUTER JOIN replay_summary_secondary_data t2 ON t1.reviewId = t2.reviewId
@@ -40,39 +39,29 @@ export default async (event): Promise<any> => {
 			AND t1.creationDate > ${escape(startDate.toISOString())}
 			ORDER BY t1.creationDate DESC
 		`;
-		console.log('prepared query', query);
-		const dbResults: readonly any[] = await mysql.query(query);
-		console.log('executed query', dbResults && dbResults.length, dbResults && dbResults.length > 0 && dbResults[0]);
-		await mysql.end();
+	console.log('prepared query', query);
+	const dbResults: readonly any[] = await mysql.query(query);
+	console.log('executed query', dbResults && dbResults.length, dbResults && dbResults.length > 0 && dbResults[0]);
+	await mysql.end();
 
-		// console.log('groupedByRelatedReviews', groupedByRelatedReviews.length);
-		const results: readonly GameStat[] = dbResults.map(review => buildReviewData(review));
-		console.log('results filtered', results.length);
+	// console.log('groupedByRelatedReviews', groupedByRelatedReviews.length);
+	const results: readonly GameStat[] = dbResults.map(review => buildReviewData(review));
+	console.log('results filtered', results.length);
 
-		const stringResults = JSON.stringify({ results });
-		const gzippedResults = gzipSync(stringResults).toString('base64');
-		console.log('compressed', stringResults.length, gzippedResults.length);
-		const response = {
-			statusCode: 200,
-			isBase64Encoded: true,
-			body: gzippedResults,
-			headers: {
-				'Content-Type': 'text/html',
-				'Content-Encoding': 'gzip',
-			},
-		};
-		console.log('sending back success reponse');
-		return response;
-	} catch (e) {
-		console.error('issue retrieving stats', e);
-		const response = {
-			statusCode: 500,
-			isBase64Encoded: false,
-			body: JSON.stringify({ message: 'not ok', exception: e }),
-		};
-		console.log('sending back error reponse', response);
-		return response;
-	}
+	const stringResults = JSON.stringify({ results });
+	const gzippedResults = gzipSync(stringResults).toString('base64');
+	console.log('compressed', stringResults.length, gzippedResults.length);
+	const response = {
+		statusCode: 200,
+		isBase64Encoded: true,
+		body: gzippedResults,
+		headers: {
+			'Content-Type': 'text/html',
+			'Content-Encoding': 'gzip',
+		},
+	};
+	console.log('sending back success reponse');
+	return response;
 };
 
 const buildReviewData = (mainReview: any): GameStat => {
