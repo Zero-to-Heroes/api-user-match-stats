@@ -16,7 +16,6 @@ export default async (event): Promise<any> => {
 	// change the input to be the username if it exists
 
 	const userInput = JSON.parse(event.body);
-	console.log('getting stats for user', JSON.stringify(userInput));
 	if (!userInput) {
 		console.warn('trying to get match stats without input, returning');
 		return;
@@ -39,18 +38,13 @@ export default async (event): Promise<any> => {
 			AND t1.creationDate > ${escape(startDate.toISOString())}
 			ORDER BY t1.creationDate DESC
 		`;
-	console.log('prepared query', query);
 	const dbResults: readonly any[] = await mysql.query(query);
-	console.log('executed query', dbResults && dbResults.length, dbResults && dbResults.length > 0 && dbResults[0]);
 	await mysql.end();
 
-	// console.log('groupedByRelatedReviews', groupedByRelatedReviews.length);
 	const results: readonly GameStat[] = dbResults.map(review => buildReviewData(review));
-	console.log('results filtered', results.length);
 
 	const stringResults = JSON.stringify({ results });
 	const gzippedResults = gzipSync(stringResults).toString('base64');
-	console.log('compressed', stringResults.length, gzippedResults.length);
 	const response = {
 		statusCode: 200,
 		isBase64Encoded: true,
@@ -60,12 +54,10 @@ export default async (event): Promise<any> => {
 			'Content-Encoding': 'gzip',
 		},
 	};
-	console.log('sending back success reponse');
 	return response;
 };
 
 const buildReviewData = (mainReview: any): GameStat => {
-	// console.log('building review data for', reviewId, mainReview, relevantReviews, dbResults);
 	return {
 		additionalResult: mainReview.additionalResult,
 		coinPlay: mainReview.coinPlay,
