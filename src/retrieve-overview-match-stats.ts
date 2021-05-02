@@ -24,21 +24,19 @@ export default async (event): Promise<any> => {
 	// First need to add the userName column, then populate it with new process, then with hourly sync process
 	// bgs-hero-pick-choice is here to accomodate the early BG games that don't have other info in
 	// match_stats
-	const userNameCrit = userInput?.userName ? `OR t1.userName = ${escape(userInput.userName)}` : '';
+	const userNameCrit = userInput?.userName ? `OR userName = ${escape(userInput.userName)}` : '';
 	const query = `
-			SELECT t1.*, t2.totalDurationSeconds, t2.totalDurationTurns, t2.duelsRunId, t3.playerArchetypeId, t3.opponentArchetypeId
-			FROM replay_summary t1
-			LEFT OUTER JOIN replay_summary_secondary_data t2 ON t1.reviewId = t2.reviewId
-			LEFT OUTER JOIN ranked_decks t3 ON t1.reviewId = t3.reviewId
+			SELECT * FROM replay_summary
 			WHERE (
-				t1.uploaderToken = ${escape(userInput.uploaderToken)}
-				OR t1.userId = ${escape(userInput?.userId)}
+				userId = ${escape(userInput?.userId)}
 				${userNameCrit}
 			)
-			AND t1.creationDate > ${escape(startDate.toISOString())}
-			ORDER BY t1.creationDate DESC
+			AND creationDate > ${escape(startDate.toISOString())}
+			ORDER BY creationDate DESC
 		`;
+	console.log('running query', query);
 	const dbResults: readonly any[] = await mysql.query(query);
+	console.log('query over');
 	await mysql.end();
 
 	const results: readonly GameStat[] = dbResults.map(review => buildReviewData(review));
@@ -82,7 +80,7 @@ const buildReviewData = (mainReview: any): GameStat => {
 		// Fill in with other stats here
 		gameDurationSeconds: mainReview.totalDurationSeconds,
 		gameDurationTurns: mainReview.totalDurationTurns,
-		currentDuelsRunId: mainReview.duelsRunId,
+		currentDuelsRunId: mainReview.runId,
 		playerArchetypeId: mainReview.playerArchetypeId,
 		opponentArchetypeId: mainReview.opponentArchetypeId,
 	} as GameStat;

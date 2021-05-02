@@ -21,22 +21,16 @@ Resources:
             Handler: retrieve-overview-match-stats.default
             # Runtime: nodejs8.10
             Runtime: nodejs10.x
-            Timeout: 100
-            ReservedConcurrentExecutions: 40
-            MemorySize: 128 # Need to increase the memory to go faster and avoid the 30s timeout on the API gateway
+            # 30s is the max timeout allowed by the API Gateway for synchronous requests
+            Timeout: 29
+            ReservedConcurrentExecutions: 80
+            MemorySize: 256 # Need to increase the memory to go faster and avoid the 30s timeout on the API gateway
             CodeUri: ./dist/retrieve-overview-match-stats
-            # https://stackoverflow.com/questions/39144688/aws-lambda-invoke-not-calling-another-lambda-function-node-js
-            # VpcConfig:
-            #     SecurityGroupIds:
-            #         - sg-0ed63616362bf1a30
-            #     SubnetIds:
-            #         - subnet-0b36da5c19637a351
-            #         - subnet-0b730ca9af74a95dd
             Policies:
                 - AWSLambdaVPCAccessExecutionRole
                 - AmazonSESFullAccess
                 - SecretsManagerReadWrite
-                - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
+                # - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
             Tags:
                 LambdaName: api-retrieve-user-match-stats
             Events:
