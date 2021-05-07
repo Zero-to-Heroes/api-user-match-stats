@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
+import { Race } from '@firestone-hs/reference-data';
 import SqlString from 'sqlstring';
 import { gzipSync } from 'zlib';
 import { getConnection } from './db/rds';
@@ -56,6 +57,9 @@ export default async (event): Promise<any> => {
 };
 
 const buildReviewData = (mainReview: any): GameStat => {
+	const bgsAvailableTribes: readonly Race[] = !mainReview.bgsAvailableTribes?.length
+		? []
+		: mainReview.bgsAvailableTribes.split(',').map(tribe => parseInt(tribe));
 	return {
 		additionalResult: mainReview.additionalResult,
 		coinPlay: mainReview.coinPlay,
@@ -83,6 +87,7 @@ const buildReviewData = (mainReview: any): GameStat => {
 		currentDuelsRunId: mainReview.runId,
 		playerArchetypeId: mainReview.playerArchetypeId,
 		opponentArchetypeId: mainReview.opponentArchetypeId,
+		bgsAvailableTribes: bgsAvailableTribes,
 	} as GameStat;
 };
 
