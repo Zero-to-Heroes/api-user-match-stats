@@ -88,6 +88,7 @@ const buildReviewData = (mainReview: any): GameStat => {
 		playerArchetypeId: mainReview.playerArchetypeId,
 		opponentArchetypeId: mainReview.opponentArchetypeId,
 		bgsAvailableTribes: bgsAvailableTribes,
+		finalComp: mainReview.finalComp,
 	} as GameStat;
 };
 
@@ -130,4 +131,5 @@ interface GameStat {
 	readonly gameDurationTurns: number;
 	readonly playerArchetypeId: string;
 	readonly opponentArchetypeId: string;
+	readonly finalComp: string;
 }
