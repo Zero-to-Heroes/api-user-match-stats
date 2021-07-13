@@ -85,6 +85,7 @@ const buildReviewData = (mainReview: any): GameStat => {
 		gameDurationSeconds: mainReview.totalDurationSeconds,
 		gameDurationTurns: mainReview.totalDurationTurns,
 		currentDuelsRunId: mainReview.runId,
+		runId: mainReview.runId,
 		playerArchetypeId: mainReview.playerArchetypeId,
 		opponentArchetypeId: mainReview.opponentArchetypeId,
 		bgsAvailableTribes: bgsAvailableTribes,
