@@ -90,6 +90,7 @@ const buildReviewData = (mainReview: any): GameStat => {
 		opponentArchetypeId: mainReview.opponentArchetypeId,
 		bgsAvailableTribes: bgsAvailableTribes,
 		finalComp: mainReview.finalComp,
+		levelAfterMatch: mainReview.levelAfterMatch,
 	} as GameStat;
 };
 
