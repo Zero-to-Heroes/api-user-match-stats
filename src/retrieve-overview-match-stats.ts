@@ -22,16 +22,13 @@ export default async (event): Promise<any> => {
 		return;
 	}
 
+	const userIds = await getValidUserInfo(userInput.userId, userInput.userName, mysql);
+
 	// First need to add the userName column, then populate it with new process, then with hourly sync process
-	// bgs-hero-pick-choice is here to accomodate the early BG games that don't have other info in
-	// match_stats
 	const userNameCrit = userInput?.userName ? `OR userName = ${escape(userInput.userName)}` : '';
 	const query = `
 			SELECT * FROM replay_summary
-			WHERE (
-				userId = ${escape(userInput?.userId)}
-				${userNameCrit}
-			)
+			WHERE userId IN (${escape(userIds)})
 			AND creationDate > ${escape(startDate.toISOString())}
 			ORDER BY creationDate DESC
 		`;
@@ -54,6 +51,29 @@ export default async (event): Promise<any> => {
 		},
 	};
 	return response;
+};
+
+const getValidUserInfo = async (userId: string, userName: string, mysql): Promise<readonly string[]> => {
+	const escape = SqlString.escape;
+	const userSelectQuery = `
+			SELECT DISTINCT userId FROM user_mapping
+			INNER JOIN (
+				SELECT DISTINCT username FROM user_mapping
+				WHERE 
+					(username = ${escape(userName)} OR username = ${escape(userId)} OR userId = ${escape(userId)})
+					AND username IS NOT NULL
+					AND username != ''
+					AND username != 'null'
+					AND userId != ''
+					AND userId IS NOT NULL
+					AND userId != 'null'
+			) AS x ON x.username = user_mapping.username
+			UNION ALL SELECT ${escape(userId)}
+		`;
+	console.log('running query', userSelectQuery);
+	const userIds: any[] = await mysql.query(userSelectQuery);
+	console.log('query over', userIds);
+	return userIds.map(result => result.userId);
 };
 
 const buildReviewData = (mainReview: any): GameStat => {
