@@ -111,6 +111,19 @@ const buildReviewData = (mainReview: any): GameStat => {
 		bgsAvailableTribes: bgsAvailableTribes,
 		finalComp: mainReview.finalComp,
 		levelAfterMatch: mainReview.levelAfterMatch,
+
+		mercHeroTimings: !!mainReview.mercHeroTimings
+			? mainReview.mercHeroTimings.split(',').map(timing => ({
+					heroCardId: timing.split('|')[0],
+					turnInPlay: timing.split('|')[1],
+			  }))
+			: null,
+		mercOpponentHeroTimings: !!mainReview.mercOpponentHeroTimings
+			? mainReview.mercOpponentHeroTimings.split(',').map(timing => ({
+					cardId: timing.split('|')[0],
+					turnInPlay: timing.split('|')[1],
+			  }))
+			: null,
 	} as GameStat;
 };
 
@@ -154,4 +167,6 @@ interface GameStat {
 	readonly playerArchetypeId: string;
 	readonly opponentArchetypeId: string;
 	readonly finalComp: string;
+	readonly mercHeroTimings: readonly { cardId: string; turnInPlay: number }[];
+	readonly mercOpponentHeroTimings: readonly { cardId: string; turnInPlay: number }[];
 }
