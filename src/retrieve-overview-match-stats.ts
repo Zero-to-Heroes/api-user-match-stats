@@ -76,54 +76,56 @@ const getValidUserInfo = async (userId: string, userName: string, mysql): Promis
 	return userIds.map(result => result.userId);
 };
 
-const buildReviewData = (mainReview: any): GameStat => {
-	const bgsAvailableTribes: readonly Race[] = !mainReview.bgsAvailableTribes?.length
+const buildReviewData = (review: any): GameStat => {
+	const bgsAvailableTribes: readonly Race[] = !review.bgsAvailableTribes?.length
 		? []
-		: mainReview.bgsAvailableTribes.split(',').map(tribe => parseInt(tribe));
+		: review.bgsAvailableTribes.split(',').map(tribe => parseInt(tribe));
 	return {
-		additionalResult: mainReview.additionalResult,
-		coinPlay: mainReview.coinPlay,
-		creationTimestamp: Date.parse(mainReview.creationDate),
-		gameFormat: mainReview.gameFormat,
-		gameMode: mainReview.gameMode,
-		opponentCardId: mainReview.opponentCardId,
-		opponentClass: mainReview.opponentClass,
-		playerName: mainReview.playerName,
-		playerCardId: mainReview.playerCardId,
-		playerClass: mainReview.playerClass,
-		playerRank: mainReview.playerRank,
-		newPlayerRank: mainReview.newPlayerRank,
-		playerDeckName: mainReview.playerDeckName,
-		playerDecklist: mainReview.playerDecklist,
-		buildNumber: mainReview.buildNumber,
-		scenarioId: mainReview.scenarioId,
-		opponentRank: mainReview.opponentRank,
-		opponentName: mainReview.opponentName,
-		result: mainReview.result,
-		reviewId: mainReview.reviewId,
+		additionalResult: review.additionalResult,
+		coinPlay: review.coinPlay,
+		creationTimestamp: Date.parse(review.creationDate),
+		gameFormat: review.gameFormat,
+		gameMode: review.gameMode,
+		opponentCardId: review.opponentCardId,
+		opponentClass: review.opponentClass,
+		playerName: review.playerName,
+		playerCardId: review.playerCardId,
+		playerClass: review.playerClass,
+		playerRank: review.playerRank,
+		newPlayerRank: review.newPlayerRank,
+		playerDeckName: review.playerDeckName,
+		playerDecklist: review.playerDecklist,
+		buildNumber: review.buildNumber,
+		scenarioId: review.scenarioId,
+		opponentRank: review.opponentRank,
+		opponentName: review.opponentName,
+		result: review.result,
+		reviewId: review.reviewId,
 		// Fill in with other stats here
-		gameDurationSeconds: mainReview.totalDurationSeconds,
-		gameDurationTurns: mainReview.totalDurationTurns,
-		currentDuelsRunId: mainReview.runId,
-		runId: mainReview.runId,
-		playerArchetypeId: mainReview.playerArchetypeId,
-		opponentArchetypeId: mainReview.opponentArchetypeId,
+		gameDurationSeconds: review.totalDurationSeconds,
+		gameDurationTurns: review.totalDurationTurns,
+		currentDuelsRunId: review.runId,
+		runId: review.runId,
+		playerArchetypeId: review.playerArchetypeId,
+		opponentArchetypeId: review.opponentArchetypeId,
 		bgsAvailableTribes: bgsAvailableTribes,
-		finalComp: mainReview.finalComp,
-		levelAfterMatch: mainReview.levelAfterMatch,
+		finalComp: review.finalComp,
+		levelAfterMatch: review.levelAfterMatch,
 
-		mercHeroTimings: !!mainReview.mercHeroTimings
-			? mainReview.mercHeroTimings.split(',').map(timing => ({
-					heroCardId: timing.split('|')[0],
-					turnInPlay: timing.split('|')[1],
-			  }))
-			: null,
-		mercOpponentHeroTimings: !!mainReview.mercOpponentHeroTimings
-			? mainReview.mercOpponentHeroTimings.split(',').map(timing => ({
-					cardId: timing.split('|')[0],
-					turnInPlay: timing.split('|')[1],
-			  }))
-			: null,
+		mercHeroTimings:
+			!!review.mercHeroTimings?.length && review.mercHeroTimings.includes(',')
+				? review.mercHeroTimings.split(',').map(timing => ({
+						cardId: timing.split('|')[0],
+						turnInPlay: +timing.split('|')[1],
+				  }))
+				: null,
+		mercOpponentHeroTimings:
+			!!review.mercOpponentHeroTimings?.length && review.mercOpponentHeroTimings.includes(',')
+				? review.mercOpponentHeroTimings.split(',').map(timing => ({
+						cardId: timing.split('|')[0],
+						turnInPlay: +timing.split('|')[1],
+				  }))
+				: null,
 	} as GameStat;
 };
 
