@@ -126,6 +126,21 @@ const buildReviewData = (review: any): GameStat => {
 						turnInPlay: +timing.split('|')[1],
 				  }))
 				: null,
+		mercEquipments:
+			!!review.mercHeroEquipments?.length && review.mercHeroEquipments.includes(',')
+				? review.mercHeroEquipments
+						.split(',')
+						.map((equip: string) => {
+							const equipmentCardId = equip.split('|')[1];
+							return !equipmentCardId?.length || equipmentCardId == '0'
+								? null
+								: {
+										mercCardId: equip.split('|')[0],
+										equipmentCardId: equipmentCardId,
+								  };
+						})
+						.filter(equip => !!equip)
+				: null,
 	} as GameStat;
 };
 
