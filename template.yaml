@@ -20,7 +20,7 @@ Resources:
         Properties:
             Handler: retrieve-overview-match-stats.default
             # Runtime: nodejs8.10
-            Runtime: nodejs10.x
+            Runtime: nodejs12.x
             # 30s is the max timeout allowed by the API Gateway for synchronous requests
             Timeout: 29
             ReservedConcurrentExecutions: 80
