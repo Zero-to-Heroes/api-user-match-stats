@@ -111,6 +111,7 @@ const buildReviewData = (review: any): GameStat => {
 		bgsAvailableTribes: bgsAvailableTribes,
 		finalComp: review.finalComp,
 		levelAfterMatch: review.levelAfterMatch,
+		bgsPerfectGame: review.bgsPerfectGame === 1,
 
 		mercHeroTimings:
 			!!review.mercHeroTimings?.length && review.mercHeroTimings.includes(',')
