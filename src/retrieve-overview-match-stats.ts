@@ -113,6 +113,10 @@ const buildReviewData = (review: any): GameStat => {
 		levelAfterMatch: review.levelAfterMatch,
 		bgsPerfectGame: review.bgsPerfectGame === 1,
 		bgsHasPrizes: review.bgsHasPrizes,
+		bgsHasQuests: review.bgsHasQuests,
+		bgsHeroQuests: review.bgsHeroQuests?.split(','),
+		bgsQuestsCompletedTimings: review.bgsQuestsCompletedTimings?.split(','),
+		bgsHeroQuestRewards: review.bgsHeroQuestRewards?.split(','),
 
 		mercHeroTimings:
 			!!review.mercHeroTimings?.length && review.mercHeroTimings.includes(',')
@@ -188,4 +192,8 @@ interface GameStat {
 	readonly finalComp: string;
 	readonly mercHeroTimings: readonly { cardId: string; turnInPlay: number }[];
 	readonly mercOpponentHeroTimings: readonly { cardId: string; turnInPlay: number }[];
+	readonly bgsHasQuests: boolean;
+	readonly bgsHeroQuests: readonly string[];
+	readonly bgsQuestsCompletedTimings: readonly number[];
+	readonly bgsHeroQuestRewards: readonly string[];
 }
