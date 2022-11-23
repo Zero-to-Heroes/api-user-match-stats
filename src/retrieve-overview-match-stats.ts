@@ -117,6 +117,7 @@ const buildReviewData = (review: any): GameStat => {
 		bgsHeroQuests: review.bgsHeroQuests?.split(','),
 		bgsQuestsCompletedTimings: review.bgsQuestsCompletedTimings?.split(','),
 		bgsHeroQuestRewards: review.bgsHeroQuestRewards?.split(','),
+		region: review.region,
 
 		mercHeroTimings:
 			!!review.mercHeroTimings?.length && review.mercHeroTimings.includes(',')
