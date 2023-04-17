@@ -39,6 +39,26 @@ Resources:
                     Properties:
                         Path: /{proxy+}
                         Method: any
+    ProcessMatchStatsFunction2:
+        Type: AWS::Serverless::Function
+        Properties:
+            Handler: retrieve-overview-match-stats.default
+            # Runtime: nodejs8.10
+            Runtime: nodejs16.x
+            Timeout: 800
+            ReservedConcurrentExecutions: 80
+            MemorySize: 512 # Need to increase the memory to go faster and avoid the 30s timeout on the API gateway
+            CodeUri: ./dist/retrieve-overview-match-stats
+            Policies:
+                - AWSLambdaVPCAccessExecutionRole
+                - AmazonSESFullAccess
+                - SecretsManagerReadWrite
+                # - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
+            Tags:
+                LambdaName: api-retrieve-user-match-stats-2
+            AutoPublishAlias: live
+            FunctionUrlConfig:
+                AuthType: NONE
 
 Outputs:
     ProcessMatchStatsApi:

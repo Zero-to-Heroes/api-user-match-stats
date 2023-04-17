@@ -10,7 +10,6 @@ import { getConnection } from './db/rds';
 export default async (event): Promise<any> => {
 	const escape = SqlString.escape;
 	const mysql = await getConnection();
-	const startDate = new Date(new Date().getTime() - 100 * 24 * 60 * 60 * 1000);
 	// This request is complex because the matches are associated to a userId,
 	// which (I learnt too late unfortunately) are not a 1-1 mapping with a username
 	// It queries against both a username and a userId so that I can later
@@ -22,19 +21,22 @@ export default async (event): Promise<any> => {
 		return;
 	}
 
+	const startDate = new Date(new Date().getTime() - 100 * 24 * 60 * 60 * 1000);
+	const startDateCriteria = userInput.fullRetrieve ? '' : `AND creationDate > ${escape(startDate.toISOString())}`;
+
 	const userIds = await getValidUserInfo(userInput.userId, userInput.userName, mysql);
 
 	// First need to add the userName column, then populate it with new process, then with hourly sync process
-	const userNameCrit = userInput?.userName ? `OR userName = ${escape(userInput.userName)}` : '';
+	// const userNameCrit = userInput?.userName ? `OR userName = ${escape(userInput.userName)}` : '';
 	const query = `
-			SELECT * FROM replay_summary
-			WHERE userId IN (${escape(userIds)})
-			AND creationDate > ${escape(startDate.toISOString())}
-			ORDER BY creationDate DESC
-		`;
+		SELECT * FROM replay_summary
+		WHERE userId IN (${escape(userIds)})
+		${startDateCriteria}
+		ORDER BY creationDate DESC
+	`;
 	console.log('running query', query);
 	const dbResults: readonly any[] = await mysql.query(query);
-	console.log('query over');
+	console.log('query over', dbResults?.length);
 	await mysql.end();
 
 	const results: readonly GameStat[] = dbResults.map(review => buildReviewData(review));
