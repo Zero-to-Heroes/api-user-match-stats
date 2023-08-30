@@ -111,6 +111,7 @@ const buildReviewData = (review: any): GameStat => {
 		playerArchetypeId: review.playerArchetypeId,
 		opponentArchetypeId: review.opponentArchetypeId,
 		bgsAvailableTribes: bgsAvailableTribes,
+		bgsAnomalies: review.bgsAnomalies?.split(',') ?? [],
 		finalComp: review.finalComp,
 		levelAfterMatch: review.levelAfterMatch,
 		bgsPerfectGame: review.bgsPerfectGame === 1,
@@ -199,4 +200,5 @@ interface GameStat {
 	readonly bgsHeroQuests: readonly string[];
 	readonly bgsQuestsCompletedTimings: readonly number[];
 	readonly bgsHeroQuestRewards: readonly string[];
+	readonly bgsAnomalies: readonly string[];
 }
