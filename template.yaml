@@ -4,16 +4,6 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: API endpoint to retrieve high-level match stats for Firestone users
 
-Globals:
-    Api:
-        # API Gateway regional endpoints
-        EndpointConfiguration: EDGE
-        Cors:
-            AllowMethods: "'*'"
-            AllowHeaders: "'*'"
-            AllowOrigin: "'*'"
-        MinimumCompressionSize: 100
-
 Resources:
     ProcessMatchStatsFunction2:
         Type: AWS::Serverless::Function
@@ -22,14 +12,17 @@ Resources:
             # Runtime: nodejs8.10
             Runtime: nodejs16.x
             Timeout: 800
-            ReservedConcurrentExecutions: 80
+            ReservedConcurrentExecutions: 10
             MemorySize: 512 # Need to increase the memory to go faster and avoid the 30s timeout on the API gateway
             CodeUri: ./dist/retrieve-overview-match-stats
+            Layers:
+                - !Sub "arn:aws:lambda:${AWS::Region}:580247275435:layer:LambdaInsightsExtension:14"
             Policies:
                 - AWSLambdaVPCAccessExecutionRole
                 - AmazonSESFullAccess
                 - SecretsManagerReadWrite
                 # - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
+                - 'arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy'
             Tags:
                 LambdaName: api-retrieve-user-match-stats-2
             AutoPublishAlias: live

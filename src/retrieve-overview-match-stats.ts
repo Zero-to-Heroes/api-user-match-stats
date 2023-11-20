@@ -10,10 +10,22 @@ import { getConnection } from './db/rds';
 export default async (event): Promise<any> => {
 	const escape = SqlString.escape;
 	const mysql = await getConnection();
-	// This request is complex because the matches are associated to a userId,
-	// which (I learnt too late unfortunately) are not a 1-1 mapping with a username
-	// It queries against both a username and a userId so that I can later
-	// change the input to be the username if it exists
+	if (!event.body?.length) {
+		return {
+			statusCode: 404,
+			isBase64Encoded: true,
+			body: null,
+			headers: {
+				'Content-Type': 'text/html',
+				'Content-Encoding': 'gzip',
+			},
+		};
+	}
+	try {
+		JSON.parse(event.body);
+	} catch (e) {
+		console.error('could not parse event body', event.body, event);
+	}
 
 	const userInput = JSON.parse(event.body);
 	if (!userInput) {
@@ -24,6 +36,10 @@ export default async (event): Promise<any> => {
 	const startDate = new Date(new Date().getTime() - 100 * 24 * 60 * 60 * 1000);
 	const startDateCriteria = userInput.fullRetrieve ? '' : `AND creationDate > ${escape(startDate.toISOString())}`;
 
+	// This request is complex because the matches are associated to a userId,
+	// which (I learnt too late unfortunately) are not a 1-1 mapping with a username
+	// It queries against both a username and a userId so that I can later
+	// change the input to be the username if it exists
 	const userIds = await getValidUserInfo(userInput.userId, userInput.userName, mysql);
 
 	// First need to add the userName column, then populate it with new process, then with hourly sync process
@@ -39,7 +55,7 @@ export default async (event): Promise<any> => {
 	console.log('query over', dbResults?.length);
 	await mysql.end();
 
-	const results: readonly GameStat[] = dbResults.map(review => buildReviewData(review));
+	const results: readonly GameStat[] = dbResults.map((review) => buildReviewData(review));
 
 	const stringResults = JSON.stringify({ results });
 	const gzippedResults = gzipSync(stringResults).toString('base64');
@@ -75,13 +91,13 @@ const getValidUserInfo = async (userId: string, userName: string, mysql): Promis
 	console.log('running query', userSelectQuery);
 	const userIds: any[] = await mysql.query(userSelectQuery);
 	console.log('query over', userIds);
-	return userIds.map(result => result.userId);
+	return userIds.map((result) => result.userId);
 };
 
 const buildReviewData = (review: any): GameStat => {
 	const bgsAvailableTribes: readonly Race[] = !review.bgsAvailableTribes?.length
 		? []
-		: review.bgsAvailableTribes.split(',').map(tribe => parseInt(tribe));
+		: review.bgsAvailableTribes.split(',').map((tribe) => parseInt(tribe));
 	return {
 		additionalResult: review.additionalResult,
 		coinPlay: review.coinPlay,
@@ -124,14 +140,14 @@ const buildReviewData = (review: any): GameStat => {
 
 		mercHeroTimings:
 			!!review.mercHeroTimings?.length && review.mercHeroTimings.includes(',')
-				? review.mercHeroTimings.split(',').map(timing => ({
+				? review.mercHeroTimings.split(',').map((timing) => ({
 						cardId: timing.split('|')[0],
 						turnInPlay: +timing.split('|')[1],
 				  }))
 				: null,
 		mercOpponentHeroTimings:
 			!!review.mercOpponentHeroTimings?.length && review.mercOpponentHeroTimings.includes(',')
-				? review.mercOpponentHeroTimings.split(',').map(timing => ({
+				? review.mercOpponentHeroTimings.split(',').map((timing) => ({
 						cardId: timing.split('|')[0],
 						turnInPlay: +timing.split('|')[1],
 				  }))
@@ -149,7 +165,7 @@ const buildReviewData = (review: any): GameStat => {
 										equipmentCardId: equipmentCardId,
 								  };
 						})
-						.filter(equip => !!equip)
+						.filter((equip) => !!equip)
 				: null,
 	} as GameStat;
 };
