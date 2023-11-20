@@ -12,7 +12,7 @@ export default async (event): Promise<any> => {
 	const mysql = await getConnection();
 	if (!event.body?.length) {
 		return {
-			statusCode: 404,
+			statusCode: 400,
 			isBase64Encoded: true,
 			body: null,
 			headers: {
@@ -91,7 +91,7 @@ const getValidUserInfo = async (userId: string, userName: string, mysql): Promis
 	console.log('running query', userSelectQuery);
 	const userIds: any[] = await mysql.query(userSelectQuery);
 	console.log('query over', userIds);
-	return userIds.map((result) => result.userId);
+	return [...new Set(userIds.map((result) => result.userId))];
 };
 
 const buildReviewData = (review: any): GameStat => {
