@@ -127,15 +127,16 @@ const buildReviewData = (review: any): GameStat => {
 		playerArchetypeId: review.playerArchetypeId,
 		opponentArchetypeId: review.opponentArchetypeId,
 		bgsAvailableTribes: bgsAvailableTribes,
-		bgsAnomalies: review.bgsAnomalies?.split(',') ?? [],
+		bgsAnomalies: review.bgsAnomalies?.length > 0 ? review.bgsAnomalies.split(',') : [],
 		finalComp: review.finalComp,
 		levelAfterMatch: review.levelAfterMatch,
 		bgsPerfectGame: review.bgsPerfectGame === 1,
 		bgsHasPrizes: review.bgsHasPrizes,
 		bgsHasQuests: review.bgsHasQuests,
-		bgsHeroQuests: review.bgsHeroQuests?.split(','),
-		bgsQuestsCompletedTimings: review.bgsQuestsCompletedTimings?.split(','),
-		bgsHeroQuestRewards: review.bgsHeroQuestRewards?.split(','),
+		bgsHeroQuests: review.bgsHeroQuests?.length > 0 ? review.bgsHeroQuests.split(',') : [],
+		bgsQuestsCompletedTimings:
+			review.bgsQuestsCompletedTimings?.length > 0 ? review.bgsQuestsCompletedTimings.split(',') : [],
+		bgsHeroQuestRewards: review.bgsHeroQuestRewards?.length > 0 ? review.bgsHeroQuestRewards.split(',') : [],
 		region: review.region,
 
 		mercHeroTimings:
