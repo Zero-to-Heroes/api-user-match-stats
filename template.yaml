@@ -13,7 +13,7 @@ Resources:
             Runtime: nodejs16.x
             Timeout: 800
             ReservedConcurrentExecutions: 10
-            MemorySize: 512 # Need to increase the memory to go faster and avoid the 30s timeout on the API gateway
+            MemorySize: 400
             CodeUri: ./dist/retrieve-overview-match-stats
             Layers:
                 - !Sub "arn:aws:lambda:${AWS::Region}:580247275435:layer:LambdaInsightsExtension:14"
