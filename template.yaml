@@ -9,11 +9,10 @@ Resources:
         Type: AWS::Serverless::Function
         Properties:
             Handler: retrieve-overview-match-stats.default
-            # Runtime: nodejs8.10
-            Runtime: nodejs16.x
-            Timeout: 800
+            Runtime: nodejs18.x
+            Timeout: 80
             ReservedConcurrentExecutions: 10
-            MemorySize: 400
+            MemorySize: 1000 # to increase the bandwidth when getting data from SQL. Updated 2024-02-01 08:00 CET
             CodeUri: ./dist/retrieve-overview-match-stats
             Layers:
                 - !Sub "arn:aws:lambda:${AWS::Region}:580247275435:layer:LambdaInsightsExtension:14"
