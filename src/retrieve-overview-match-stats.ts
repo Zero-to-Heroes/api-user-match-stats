@@ -187,6 +187,7 @@ interface GameStat {
 		| 'ranked'
 		| 'tavern-brawl'
 		| 'battlegrounds'
+		| 'battlegrounds-duo'
 		| 'duels'
 		| 'paid-duels';
 	readonly gameFormat: 'standard' | 'wild';
