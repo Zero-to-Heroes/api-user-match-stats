@@ -9,7 +9,6 @@ import { getConnection } from './db/rds';
 // [1]: https://aws.amazon.com/blogs/compute/node-js-8-10-runtime-now-available-in-aws-lambda/
 export default async (event): Promise<any> => {
 	const escape = SqlString.escape;
-	const mysql = await getConnection();
 	if (!event.body?.length) {
 		return {
 			statusCode: 400,
@@ -36,6 +35,7 @@ export default async (event): Promise<any> => {
 	const startDate = new Date(new Date().getTime() - 100 * 24 * 60 * 60 * 1000);
 	const startDateCriteria = userInput.fullRetrieve ? '' : `AND creationDate > ${escape(startDate.toISOString())}`;
 
+	const mysql = await getConnection();
 	// This request is complex because the matches are associated to a userId,
 	// which (I learnt too late unfortunately) are not a 1-1 mapping with a username
 	// It queries against both a username and a userId so that I can later
