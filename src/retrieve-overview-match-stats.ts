@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
+import { getConnectionProxy } from '@firestone-hs/aws-lambda-utils';
 import { Race } from '@firestone-hs/reference-data';
 import SqlString from 'sqlstring';
 import { gzipSync } from 'zlib';
-import { getConnection } from './db/rds';
 
 // This example demonstrates a NodeJS 8.10 async handler[1], however of course you could use
 // the more traditional callback-style handler.
@@ -35,7 +35,7 @@ export default async (event): Promise<any> => {
 	const startDate = new Date(new Date().getTime() - 100 * 24 * 60 * 60 * 1000);
 	const startDateCriteria = userInput.fullRetrieve ? '' : `AND creationDate > ${escape(startDate.toISOString())}`;
 
-	const mysql = await getConnection();
+	const mysql = await getConnectionProxy();
 	// This request is complex because the matches are associated to a userId,
 	// which (I learnt too late unfortunately) are not a 1-1 mapping with a username
 	// It queries against both a username and a userId so that I can later

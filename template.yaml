@@ -14,6 +14,11 @@ Resources:
             ReservedConcurrentExecutions: 10
             MemorySize: 1000 # to increase the bandwidth when getting data from SQL. Updated 2024-02-01 08:00 CET
             CodeUri: ./dist/retrieve-overview-match-stats
+            VpcConfig:
+                SecurityGroupIds:
+                    - sg-eccd2691
+                SubnetIds:
+                    - subnet-894624ec # Only the private subnet
             # Layers:
             #     - !Sub "arn:aws:lambda:${AWS::Region}:580247275435:layer:LambdaInsightsExtension:14"
             Policies:
@@ -21,6 +26,8 @@ Resources:
                 - AmazonSESFullAccess
                 - SecretsManagerReadWrite
                 - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy
+                # For VPC
+                - AWSLambdaENIManagementAccess
                 - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
             Tags:
                 LambdaName: api-retrieve-user-match-stats-2
