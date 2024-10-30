@@ -138,6 +138,7 @@ const buildReviewData = (review: any): GameStat => {
 			review.bgsQuestsCompletedTimings?.length > 0 ? review.bgsQuestsCompletedTimings.split(',') : [],
 		bgsHeroQuestRewards: review.bgsHeroQuestRewards?.length > 0 ? review.bgsHeroQuestRewards.split(',') : [],
 		region: review.region,
+		bgsTrinkets: review.bgsTrinkets?.length ? review.bgsTrinkets.split(',') : [],
 
 		mercHeroTimings:
 			!!review.mercHeroTimings?.length && review.mercHeroTimings.includes(',')
@@ -219,4 +220,5 @@ interface GameStat {
 	readonly bgsQuestsCompletedTimings: readonly number[];
 	readonly bgsHeroQuestRewards: readonly string[];
 	readonly bgsAnomalies: readonly string[];
+	readonly bgsTrinkets: readonly string[];
 }
